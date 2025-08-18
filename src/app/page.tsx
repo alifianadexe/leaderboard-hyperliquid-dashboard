@@ -1,6 +1,7 @@
 import { Leaderboard } from "@/components/Leaderboard";
 import { ApiStatus } from "@/components/ApiStatus";
-import { TrendingUp, BarChart3, Users, Zap, Activity } from "lucide-react";
+import { TrendingUp, BarChart3, Users, Zap, Activity, Book } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -25,7 +26,14 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-6">
+                <Link 
+                  href="/docs" 
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-300 hover:text-emerald-400 hover:bg-zinc-800/30 rounded-lg transition-all duration-200"
+                >
+                  <Book className="w-4 h-4" />
+                  Documentation
+                </Link>
                 <ApiStatus />
                 <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
                   <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
