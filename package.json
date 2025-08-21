@@ -9,13 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.17.0",
     "@next/font": "^14.2.15",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-table": "^8.21.3",
+    "@types/js-cookie": "^3.0.6",
     "clsx": "^2.1.1",
+    "ethers": "^6.15.0",
     "framer-motion": "^12.23.12",
     "highlight.js": "^11.11.1",
+    "js-cookie": "^3.0.5",
     "lucide-react": "^0.539.0",
     "marked": "^16.1.2",
     "next": "15.4.6",

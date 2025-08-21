@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Trader } from "@/types/api";
-import { api } from "@/lib/api";
 import {
   cn,
   formatCurrency,
@@ -37,7 +36,23 @@ export function Leaderboard({ className }: LeaderboardProps) {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.getLeaderboard(sortBy, sortOrder);
+
+      const response = await fetch(
+        `/api/leaderboard?sort_by=${sortBy}&order=${sortOrder}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch leaderboard: ${response.statusText}`);
+      }
+
+      const data = await response.json();
       setTraders(data);
     } catch (err) {
       setError(

@@ -1,6 +1,14 @@
 import { Leaderboard } from "@/components/Leaderboard";
 import { ApiStatus } from "@/components/ApiStatus";
-import { TrendingUp, BarChart3, Users, Zap, Activity, Book } from "lucide-react";
+import { UserDropdown } from "@/components/UserDropdown";
+import {
+  TrendingUp,
+  BarChart3,
+  Users,
+  Zap,
+  Activity,
+  Book,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -27,8 +35,8 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-6">
-                <Link 
-                  href="/docs" 
+                <Link
+                  href="/docs"
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-300 hover:text-emerald-400 hover:bg-zinc-800/30 rounded-lg transition-all duration-200"
                 >
                   <Book className="w-4 h-4" />
@@ -41,6 +49,7 @@ export default function Home() {
                     Live
                   </span>
                 </div>
+                <UserDropdown />
               </div>
             </div>
           </div>
