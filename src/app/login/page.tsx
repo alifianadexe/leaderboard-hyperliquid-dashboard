@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Wallet,
@@ -27,6 +27,10 @@ export default function LoginPage() {
 
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get redirect URL from search params, default to home
+  const redirectTo = searchParams.get("redirect") || "/";
 
   const handleWalletAuth = async () => {
     setIsLoading(true);
@@ -82,7 +86,8 @@ export default function LoginPage() {
       // Step 5: Login user
       await login(authData.access_token);
 
-      router.push("/");
+      // Redirect to the intended page or home
+      router.push(redirectTo);
     } catch (err: any) {
       console.error("Wallet authentication error:", err);
       setError(err.message || "Failed to authenticate with wallet");

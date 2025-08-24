@@ -19,7 +19,9 @@ import {
   BarChart3,
   Clock,
   Activity,
+  Copy,
 } from "lucide-react";
+import { CreateCopySubscriptionModal } from "@/components/CreateCopySubscriptionModal";
 
 interface LeaderboardProps {
   className?: string;
@@ -31,6 +33,8 @@ export function Leaderboard({ className }: LeaderboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>("win_rate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [selectedTrader, setSelectedTrader] = useState<Trader | null>(null);
 
   const fetchLeaderboard = useCallback(async () => {
     try {
@@ -83,6 +87,11 @@ export function Leaderboard({ className }: LeaderboardProps) {
     ) : (
       <TrendingUp className="w-3 h-3 ml-1" />
     );
+  };
+
+  const handleCopyTrader = (trader: Trader) => {
+    setSelectedTrader(trader);
+    setShowCopyModal(true);
   };
 
   if (loading) {
@@ -358,6 +367,9 @@ export function Leaderboard({ className }: LeaderboardProps) {
                       Updated
                     </div>
                   </th>
+                  <th className="text-center py-6 px-6 text-xs font-bold text-zinc-300 uppercase tracking-widest">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/20 space-y-1">
@@ -456,6 +468,16 @@ export function Leaderboard({ className }: LeaderboardProps) {
                         {formatTimeAgo(trader.updated_at)}
                       </span>
                     </td>
+                    <td className="py-5 px-6 text-center">
+                      <button
+                        onClick={() => handleCopyTrader(trader)}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105"
+                        title="Copy this trader"
+                      >
+                        <Copy className="w-3 h-3" />
+                        Copy
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -474,6 +496,22 @@ export function Leaderboard({ className }: LeaderboardProps) {
           </h3>
           <p className="text-zinc-500">The leaderboard is currently empty.</p>
         </div>
+      )}
+
+      {/* Copy Trading Modal */}
+      {showCopyModal && selectedTrader && (
+        <CreateCopySubscriptionModal
+          selectedTrader={selectedTrader}
+          onClose={() => {
+            setShowCopyModal(false);
+            setSelectedTrader(null);
+          }}
+          onCreated={() => {
+            setShowCopyModal(false);
+            setSelectedTrader(null);
+            // Optionally show success message
+          }}
+        />
       )}
     </div>
   );

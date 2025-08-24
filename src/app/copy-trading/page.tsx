@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { ArrowLeft, TrendingUp } from "lucide-react";
-import { UserProfile } from "@/components/UserProfile";
 import { ApiStatus } from "@/components/ApiStatus";
+import { UserDropdown } from "@/components/UserDropdown";
+import { CopySubscriptionsManager } from "@/components/CopySubscriptionsManager";
 
-export default function ProfilePage() {
+export default function CopyTradingPage() {
   return (
     <main className="min-h-screen bg-zinc-950">
       {/* Background gradient */}
@@ -25,7 +26,7 @@ export default function ProfilePage() {
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-white">User Profile</h1>
+                  <h1 className="text-xl font-bold text-white">Copy Trading</h1>
                   <p className="text-xs text-zinc-500">Back to Dashboard</p>
                 </div>
               </Link>
@@ -37,14 +38,15 @@ export default function ProfilePage() {
                     Live
                   </span>
                 </div>
+                <UserDropdown />
               </div>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <div className="max-w-4xl mx-auto px-8 py-12">
-          <UserProfile />
+        <div className="max-w-7xl mx-auto px-8 py-12">
+          <CopySubscriptionsManager />
         </div>
       </div>
     </main>

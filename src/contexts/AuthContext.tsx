@@ -51,13 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initialize auth state from cookie
   useEffect(() => {
     const initAuth = async () => {
-      const token = Cookies.get("access_token");
+      const token = Cookies.get("auth_token"); // Changed from access_token to auth_token
       if (token) {
         try {
           await fetchUserProfile(token);
         } catch (error) {
           console.error("Failed to initialize auth:", error);
-          Cookies.remove("access_token");
+          Cookies.remove("auth_token"); // Changed from access_token to auth_token
         }
       }
       setAuthState((prev) => ({ ...prev, isLoading: false }));
@@ -89,13 +89,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (token: string) => {
-    Cookies.set("access_token", token, { expires: 7 }); // 7 days
+    Cookies.set("auth_token", token, { expires: 7 }); // Changed from access_token to auth_token
     await fetchUserProfile(token);
   };
 
   const logout = async () => {
     try {
-      const token = Cookies.get("access_token");
+      const token = Cookies.get("auth_token"); // Changed from access_token to auth_token
       if (token) {
         await fetch(`${API_URL}/auth/logout`, {
           method: "POST",
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      Cookies.remove("access_token");
+      Cookies.remove("auth_token"); // Changed from access_token to auth_token
       setAuthState({
         user: null,
         isAuthenticated: false,
@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshToken = async (): Promise<boolean> => {
     try {
-      const token = Cookies.get("access_token");
+      const token = Cookies.get("auth_token"); // Changed from access_token to auth_token
       if (!token) return false;
 
       const response = await fetch(`${API_URL}/auth/refresh`, {
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!response.ok) return false;
 
       const data = await response.json();
-      Cookies.set("access_token", data.access_token, { expires: 7 });
+      Cookies.set("auth_token", data.access_token, { expires: 7 }); // Changed from access_token to auth_token
       setAuthState((prev) => ({ ...prev, accessToken: data.access_token }));
       return true;
     } catch (error) {

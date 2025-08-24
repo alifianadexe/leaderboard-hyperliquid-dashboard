@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Wallet,
   Mail,
+  Key,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -130,6 +131,18 @@ export function UserDropdown() {
             >
               <User className="w-4 h-4" />
               View Profile
+            </button>
+
+            {/* Exchange Keys */}
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                router.push("/exchange-keys");
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
+            >
+              <Key className="w-4 h-4" />
+              Exchange Keys
             </button>
 
             {/* Settings */}

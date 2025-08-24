@@ -8,16 +8,18 @@ import {
   Zap,
   Activity,
   Book,
+  Copy,
 } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-zinc-950">
-      {/* Subtle background gradient */}
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/5 via-zinc-950 to-blue-900/5" />
 
       <div className="relative">
-        {/* Minimal Header */}
+        {/* Header */}
         <header className="border-b border-zinc-800/40 bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50">
           <div className="max-w-12xl mx-auto px-8 py-4">
             <div className="flex items-center justify-between">
@@ -35,6 +37,13 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-6">
+                <Link
+                  href="/copy-trading"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-300 hover:text-blue-400 hover:bg-zinc-800/30 rounded-lg transition-all duration-200"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copy Trading
+                </Link>
                 <Link
                   href="/docs"
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-300 hover:text-emerald-400 hover:bg-zinc-800/30 rounded-lg transition-all duration-200"
@@ -55,7 +64,7 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Centered Hero */}
+        {/* Hero Section */}
         <section className="py-24 sm:py-32">
           <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium mb-8">
@@ -75,7 +84,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Main Leaderboard - Centered */}
+        {/* Main Leaderboard */}
         <section className="pb-24 sm:pb-32">
           <div className="max-w-12xl mx-auto px-4 sm:px-6 lg:px-8">
             <Leaderboard />

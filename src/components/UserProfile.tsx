@@ -200,6 +200,30 @@ export function UserProfile() {
             </div>
           </div>
         </div>
+
+        {/* Quick Actions */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-white">Quick Actions</h3>
+          <div className="grid gap-3">
+            <button
+              onClick={() => router.push("/exchange-keys")}
+              className="flex items-center justify-between p-4 bg-zinc-800/30 border border-zinc-700/50 rounded-xl hover:bg-zinc-800/40 transition-all duration-200 group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Key className="w-5 h-5 text-blue-400" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium text-white">Manage Exchange Keys</p>
+                  <p className="text-sm text-zinc-400">
+                    Add or update your API credentials
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
