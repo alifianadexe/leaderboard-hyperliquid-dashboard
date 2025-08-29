@@ -9,6 +9,7 @@ import {
   Activity,
   Book,
   Copy,
+  PieChart,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -37,6 +38,13 @@ export default function Home() {
                 </div>
               </div>
               <div className="flex items-center gap-6">
+                <Link
+                  href="/portfolio"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-300 hover:text-purple-400 hover:bg-zinc-800/30 rounded-lg transition-all duration-200"
+                >
+                  <PieChart className="w-4 h-4" />
+                  Portfolio
+                </Link>
                 <Link
                   href="/copy-trading"
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-300 hover:text-blue-400 hover:bg-zinc-800/30 rounded-lg transition-all duration-200"

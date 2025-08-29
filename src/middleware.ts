@@ -7,6 +7,7 @@ const protectedRoutes = [
   "/exchange-keys",
   "/settings",
   "/copy-trading",
+  "/portfolio",
 ];
 const authRoutes = ["/login"];
 

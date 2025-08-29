@@ -31,33 +31,100 @@ export function Leaderboard({ className }: LeaderboardProps) {
   const [traders, setTraders] = useState<Trader[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<string>("win_rate");
+  const [sortBy, setSortBy] = useState<string>("trader_score"); // Updated default
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [selectedTrader, setSelectedTrader] = useState<Trader | null>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [limit] = useState(50);
+
+  // Filter state
+  const [filters, setFilters] = useState({
+    minWinRate: null as number | null,
+    minVolume: null as number | null,
+    minTrades: null as number | null,
+    onlyProfitable: false,
+    excludeNewTraders: false,
+  });
 
   const fetchLeaderboard = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(
-        `/api/leaderboard?sort_by=${sortBy}&order=${sortOrder}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-        }
-      );
+      // Build query parameters
+      const params = new URLSearchParams({
+        sort_by: sortBy,
+        order: sortOrder,
+        page: currentPage.toString(),
+        limit: limit.toString(),
+      });
+
+      // Add filters if they have values
+      if (filters.minWinRate !== null)
+        params.append("min_win_rate", filters.minWinRate.toString());
+      if (filters.minVolume !== null)
+        params.append("min_volume", filters.minVolume.toString());
+      if (filters.minTrades !== null)
+        params.append("min_trades", filters.minTrades.toString());
+      if (filters.onlyProfitable) params.append("only_profitable", "true");
+      if (filters.excludeNewTraders)
+        params.append("exclude_new_traders", "true");
+
+      const response = await fetch(`/api/leaderboard?${params}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch leaderboard: ${response.statusText}`);
       }
 
       const data = await response.json();
-      setTraders(data);
+      console.log("API Response:", data); // Debug log
+
+      // Handle the new paginated API response format
+      let tradersArray = [];
+      let paginationData: any = {};
+
+      if (Array.isArray(data)) {
+        // Legacy format (direct array)
+        tradersArray = data;
+        setTotalCount(data.length);
+        setTotalPages(1);
+      } else if (data && Array.isArray(data.traders)) {
+        // New paginated format with traders array
+        tradersArray = data.traders;
+        paginationData = data;
+      } else if (data && Array.isArray(data.data)) {
+        // Alternative paginated format with data array
+        tradersArray = data.data;
+        paginationData = data;
+      } else if (data && Array.isArray(data.items)) {
+        // Another possible paginated format
+        tradersArray = data.items;
+        paginationData = data;
+      } else {
+        console.warn("Unexpected API response format:", data);
+        tradersArray = [];
+      }
+
+      // Update pagination state if available
+      if (paginationData.total_count !== undefined)
+        setTotalCount(paginationData.total_count);
+      if (paginationData.total_pages !== undefined)
+        setTotalPages(paginationData.total_pages);
+      if (paginationData.page !== undefined)
+        setCurrentPage(paginationData.page);
+
+      setTraders(tradersArray);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch leaderboard"
@@ -65,7 +132,7 @@ export function Leaderboard({ className }: LeaderboardProps) {
     } finally {
       setLoading(false);
     }
-  }, [sortBy, sortOrder]);
+  }, [sortBy, sortOrder, currentPage, limit, filters]);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -258,9 +325,14 @@ export function Leaderboard({ className }: LeaderboardProps) {
               Total Volume
             </p>
             <p className="text-2xl font-bold text-white monospace">
-              {formatCurrency(
-                traders.reduce((sum, t) => sum + t.total_volume_usd, 0)
-              )}
+              {Array.isArray(traders) && traders.length > 0
+                ? formatCurrency(
+                    traders.reduce(
+                      (sum, t) => sum + (t.total_volume_usd || 0),
+                      0
+                    )
+                  )
+                : formatCurrency(0)}
             </p>
           </div>
           <div className="bg-zinc-800/30 border border-zinc-700/40 rounded-xl p-6 text-center">
@@ -271,9 +343,12 @@ export function Leaderboard({ className }: LeaderboardProps) {
               Avg Win Rate
             </p>
             <p className="text-2xl font-bold text-emerald-400 monospace">
-              {formatPercentage(
-                traders.reduce((sum, t) => sum + t.win_rate, 0) / traders.length
-              )}
+              {Array.isArray(traders) && traders.length > 0
+                ? formatPercentage(
+                    traders.reduce((sum, t) => sum + (t.win_rate || 0), 0) /
+                      traders.length
+                  )
+                : "0%"}
             </p>
           </div>
         </div>
@@ -373,113 +448,114 @@ export function Leaderboard({ className }: LeaderboardProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/20 space-y-1">
-                {traders.map((trader, index) => (
-                  <tr
-                    key={trader.trader_id}
-                    className="hover:bg-zinc-800/10 transition-all duration-200 group"
-                  >
-                    <td className="py-5 px-6 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="relative">
-                          <span className="text-lg font-bold text-zinc-200 monospace">
-                            {index + 1}
-                          </span>
-                          {index < 3 && (
-                            <div
-                              className={`absolute -top-1 -right-3 w-2 h-2 rounded-full ${
-                                index === 0
-                                  ? "bg-yellow-400"
-                                  : index === 1
-                                  ? "bg-zinc-300"
-                                  : "bg-amber-600"
-                              }`}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-5 px-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-emerald-500 to-blue-500 flex items-center justify-center text-sm font-bold text-white shadow-lg flex-shrink-0">
-                          {trader.trader_address.slice(2, 4).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-sm font-semibold text-white monospace group-hover:text-emerald-400 transition-colors truncate">
-                            {formatAddress(trader.trader_address)}
-                          </div>
-                          <div className="text-xs text-zinc-500 mt-1">
-                            ID: {trader.trader_id}
+                {Array.isArray(traders) &&
+                  traders.map((trader, index) => (
+                    <tr
+                      key={trader.trader_id}
+                      className="hover:bg-zinc-800/10 transition-all duration-200 group"
+                    >
+                      <td className="py-5 px-6 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="relative">
+                            <span className="text-lg font-bold text-zinc-200 monospace">
+                              {index + 1}
+                            </span>
+                            {index < 3 && (
+                              <div
+                                className={`absolute -top-1 -right-3 w-2 h-2 rounded-full ${
+                                  index === 0
+                                    ? "bg-yellow-400"
+                                    : index === 1
+                                    ? "bg-zinc-300"
+                                    : "bg-amber-600"
+                                }`}
+                              />
+                            )}
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-5 px-6 text-center">
-                      <div
-                        className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-sm font-bold monospace border ${
-                          trader.win_rate >= 0.6
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                            : trader.win_rate >= 0.4
-                            ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/30"
-                            : "bg-red-500/10 text-red-400 border-red-500/30"
-                        }`}
-                      >
-                        {formatPercentage(trader.win_rate)}
-                      </div>
-                    </td>
-                    <td className="py-5 px-6 text-center">
-                      <span className="text-sm font-semibold text-zinc-200 monospace">
-                        {formatCurrency(trader.total_volume_usd)}
-                      </span>
-                    </td>
-                    <td className="py-5 px-6 text-center">
-                      <span className="text-sm font-bold text-emerald-400 monospace">
-                        {formatCurrency(trader.max_profit_usd)}
-                      </span>
-                    </td>
-                    <td className="py-5 px-6 text-center">
-                      <span className="text-sm font-semibold text-zinc-200 monospace">
-                        {trader.avg_risk_ratio.toFixed(2)}
-                      </span>
-                    </td>
-                    <td className="py-5 px-6 text-center">
-                      <span className="text-sm font-semibold text-red-400 monospace">
-                        {formatPercentage(trader.max_drawdown)}
-                      </span>
-                    </td>
-                    <td className="py-5 px-6 text-center">
-                      <span className="text-sm font-semibold text-red-400 monospace">
-                        {formatCurrency(trader.max_loss_usd)}
-                      </span>
-                    </td>
-                    <td className="py-5 px-6 text-center">
-                      <span className="text-sm font-bold text-blue-400 monospace">
-                        {trader.trader_score
-                          ? trader.trader_score.toFixed(2)
-                          : "N/A"}
-                      </span>
-                    </td>
-                    <td className="py-5 px-6 text-center">
-                      <span className="inline-flex items-center px-2 py-1 bg-zinc-800/30 rounded-md text-sm text-zinc-300 monospace">
-                        {trader.account_age_days}d
-                      </span>
-                    </td>
-                    <td className="py-5 px-6 text-center">
-                      <span className="text-xs text-zinc-500">
-                        {formatTimeAgo(trader.updated_at)}
-                      </span>
-                    </td>
-                    <td className="py-5 px-6 text-center">
-                      <button
-                        onClick={() => handleCopyTrader(trader)}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105"
-                        title="Copy this trader"
-                      >
-                        <Copy className="w-3 h-3" />
-                        Copy
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="py-5 px-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-emerald-500 to-blue-500 flex items-center justify-center text-sm font-bold text-white shadow-lg flex-shrink-0">
+                            {trader.trader_address.slice(2, 4).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-white monospace group-hover:text-emerald-400 transition-colors truncate">
+                              {formatAddress(trader.trader_address)}
+                            </div>
+                            <div className="text-xs text-zinc-500 mt-1">
+                              ID: {trader.trader_id}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <div
+                          className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-sm font-bold monospace border ${
+                            trader.win_rate >= 0.6
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                              : trader.win_rate >= 0.4
+                              ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/30"
+                              : "bg-red-500/10 text-red-400 border-red-500/30"
+                          }`}
+                        >
+                          {formatPercentage(trader.win_rate)}
+                        </div>
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <span className="text-sm font-semibold text-zinc-200 monospace">
+                          {formatCurrency(trader.total_volume_usd)}
+                        </span>
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <span className="text-sm font-bold text-emerald-400 monospace">
+                          {formatCurrency(trader.max_profit_usd)}
+                        </span>
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <span className="text-sm font-semibold text-zinc-200 monospace">
+                          {trader.avg_risk_ratio.toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <span className="text-sm font-semibold text-red-400 monospace">
+                          {formatPercentage(trader.max_drawdown)}
+                        </span>
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <span className="text-sm font-semibold text-red-400 monospace">
+                          {formatCurrency(trader.max_loss_usd)}
+                        </span>
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <span className="text-sm font-bold text-blue-400 monospace">
+                          {trader.trader_score
+                            ? trader.trader_score.toFixed(2)
+                            : "N/A"}
+                        </span>
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <span className="inline-flex items-center px-2 py-1 bg-zinc-800/30 rounded-md text-sm text-zinc-300 monospace">
+                          {trader.account_age_days}d
+                        </span>
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <span className="text-xs text-zinc-500">
+                          {formatTimeAgo(trader.updated_at)}
+                        </span>
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <button
+                          onClick={() => handleCopyTrader(trader)}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105"
+                          title="Copy this trader"
+                        >
+                          <Copy className="w-3 h-3" />
+                          Copy
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

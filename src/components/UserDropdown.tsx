@@ -10,6 +10,7 @@ import {
   Wallet,
   Mail,
   Key,
+  PieChart,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -131,6 +132,18 @@ export function UserDropdown() {
             >
               <User className="w-4 h-4" />
               View Profile
+            </button>
+
+            {/* Portfolio */}
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                router.push("/portfolio");
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
+            >
+              <PieChart className="w-4 h-4" />
+              Portfolio
             </button>
 
             {/* Exchange Keys */}
