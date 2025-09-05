@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  PnLAnalysis,
-  CopyTradingPerformance,
-  Portfolio,
-} from "@/types/portfolio";
+import { PnLAnalysis, CopyTradingPerformance } from "@/types/portfolio";
 import {
   BarChart3,
   TrendingUp,
@@ -17,11 +13,34 @@ import {
   Filter,
 } from "lucide-react";
 
+// Extended portfolio interface to handle different API response structures
+interface ExtendedPortfolio {
+  id: number;
+  user_id?: string;
+  exchange_key_id?: number;
+  exchange_platform?: string;
+  exchange_info?: {
+    platform: string;
+    nickname: string;
+    exchange_key_id: number;
+  };
+  account_balance_usd: number;
+  total_pnl_usd: number;
+  unrealized_pnl_usd?: number;
+  realized_pnl_usd?: number;
+  margin_used_usd?: number;
+  margin_available_usd?: number;
+  active_positions_count: number;
+  last_sync_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export function PortfolioAnalytics() {
   const [pnlAnalysis, setPnLAnalysis] = useState<PnLAnalysis | null>(null);
   const [copyTradingPerf, setCopyTradingPerf] =
     useState<CopyTradingPerformance | null>(null);
-  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [portfolios, setPortfolios] = useState<ExtendedPortfolio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,11 +67,47 @@ export function PortfolioAnalytics() {
       console.log("Portfolios data in Analytics:", data);
       console.log("Is array:", Array.isArray(data));
 
+      // Normalize portfolio data similar to PortfolioOverview
+      const normalizePortfolio = (portfolio: any) => ({
+        id: portfolio.id,
+        user_id: portfolio.user_id,
+        exchange_key_id:
+          portfolio.exchange_info?.exchange_key_id || portfolio.exchange_key_id,
+        exchange_platform:
+          portfolio.exchange_info?.platform ||
+          portfolio.exchange_platform ||
+          "Exchange",
+        account_balance_usd:
+          portfolio.balance?.total_usd || portfolio.account_balance_usd || 0,
+        total_pnl_usd: portfolio.pnl?.total_usd || portfolio.total_pnl_usd || 0,
+        unrealized_pnl_usd:
+          portfolio.pnl?.unrealized_usd || portfolio.unrealized_pnl_usd || 0,
+        realized_pnl_usd:
+          portfolio.pnl?.realized_usd || portfolio.realized_pnl_usd || 0,
+        margin_used_usd:
+          portfolio.balance?.margin_used_usd || portfolio.margin_used_usd || 0,
+        margin_available_usd:
+          portfolio.balance?.available_usd ||
+          portfolio.margin_available_usd ||
+          0,
+        active_positions_count:
+          portfolio.positions_count || portfolio.active_positions_count || 0,
+        last_sync_at:
+          portfolio.last_updated ||
+          portfolio.last_sync_at ||
+          new Date().toISOString(),
+        created_at: portfolio.created_at || new Date().toISOString(),
+        updated_at:
+          portfolio.last_updated ||
+          portfolio.updated_at ||
+          new Date().toISOString(),
+      });
+
       // Handle different response structures
       if (Array.isArray(data)) {
-        setPortfolios(data);
+        setPortfolios(data.map(normalizePortfolio));
       } else if (data.portfolios && Array.isArray(data.portfolios)) {
-        setPortfolios(data.portfolios);
+        setPortfolios(data.portfolios.map(normalizePortfolio));
       } else {
         setPortfolios([]);
         console.warn(
@@ -84,11 +139,102 @@ export function PortfolioAnalytics() {
       if (!pnlRes.ok) throw new Error("Failed to fetch P&L analysis");
 
       const pnlData = await pnlRes.json();
-      setPnLAnalysis(pnlData);
+      console.log("P&L Analysis Data:", pnlData);
+
+      // Normalize P&L analysis data to match component expectations
+      const normalizedPnLAnalysis: PnLAnalysis = {
+        portfolio_id: selectedPortfolio || undefined,
+        period_days: pnlData.analysis_period?.period_days || periodDays,
+        total_pnl_usd: pnlData.overall_performance?.net_pnl_usd || 0,
+        realized_pnl_usd: pnlData.overall_performance?.net_pnl_usd || 0,
+        unrealized_pnl_usd: 0,
+        win_rate: pnlData.overall_performance?.win_rate || 0,
+        total_trades: pnlData.overall_performance?.total_trades || 0,
+        winning_trades: pnlData.overall_performance?.winning_trades || 0,
+        losing_trades: pnlData.overall_performance?.losing_trades || 0,
+        largest_win_usd: 0,
+        largest_loss_usd: 0,
+        average_win_usd: 0,
+        average_loss_usd: 0,
+        profit_factor: 0,
+        max_drawdown_usd: 0,
+        max_drawdown_percent: 0,
+        daily_pnl:
+          pnlData.daily_breakdown?.map((day: any) => ({
+            date: day.date,
+            pnl_usd: day.pnl_usd,
+            cumulative_pnl_usd: day.pnl_usd,
+          })) || [],
+      };
+
+      setPnLAnalysis(normalizedPnLAnalysis);
 
       if (copyRes.ok) {
         const copyData = await copyRes.json();
-        setCopyTradingPerf(copyData);
+        console.log("Copy Trading Data:", copyData);
+
+        // Normalize copy trading data to match component expectations
+        const normalizedCopyTrading: CopyTradingPerformance = {
+          subscription_id: undefined,
+          total_subscriptions: copyData.summary?.total_subscriptions || 0,
+          total_copied_trades: 0,
+          successful_trades: 0,
+          failed_trades: 0,
+          total_pnl_usd: copyData.summary?.total_net_profit_usd || 0,
+          win_rate: copyData.summary?.average_success_rate || 0,
+          average_trade_size_usd: 0,
+          best_performing_subscription: undefined,
+          worst_performing_subscription: undefined,
+        };
+
+        // Process individual copy trading performance data
+        if (
+          copyData.copy_trading_performance &&
+          Array.isArray(copyData.copy_trading_performance)
+        ) {
+          const performances = copyData.copy_trading_performance;
+          let totalCopyTrades = 0;
+          let totalSuccessful = 0;
+          let totalFailed = 0;
+          let bestPerformance: any = null;
+          let worstPerformance: any = null;
+
+          performances.forEach((perf: any) => {
+            const trades = perf.performance?.total_copy_trades || 0;
+            const successful = perf.performance?.successful_copy_trades || 0;
+            const failed = perf.performance?.failed_copy_trades || 0;
+            const pnl =
+              perf.performance?.financial_metrics?.net_profit_usd || 0;
+            const winRate = perf.performance?.risk_metrics?.win_rate || 0;
+
+            totalCopyTrades += trades;
+            totalSuccessful += successful;
+            totalFailed += failed;
+
+            const perfData = {
+              subscription_id: perf.subscription?.id,
+              master_trader_address: perf.subscription?.master_trader_address,
+              pnl_usd: pnl,
+              win_rate: winRate,
+            };
+
+            if (!bestPerformance || pnl > bestPerformance.pnl_usd) {
+              bestPerformance = perfData;
+            }
+            if (!worstPerformance || pnl < worstPerformance.pnl_usd) {
+              worstPerformance = perfData;
+            }
+          });
+
+          normalizedCopyTrading.total_copied_trades = totalCopyTrades;
+          normalizedCopyTrading.successful_trades = totalSuccessful;
+          normalizedCopyTrading.failed_trades = totalFailed;
+          normalizedCopyTrading.best_performing_subscription = bestPerformance;
+          normalizedCopyTrading.worst_performing_subscription =
+            worstPerformance;
+        }
+
+        setCopyTradingPerf(normalizedCopyTrading);
       }
     } catch (err) {
       setError(

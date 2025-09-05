@@ -6,6 +6,7 @@ import { PortfolioAnalytics } from "@/components/PortfolioAnalytics";
 import { TradingHistory } from "@/components/TradingHistory";
 import { ActivePositions } from "@/components/ActivePositions";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Link from "next/link";
 import {
   TrendingUp,
   BarChart3,
@@ -13,6 +14,7 @@ import {
   Activity,
   RefreshCw,
   Settings,
+  ArrowLeft,
 } from "lucide-react";
 
 export default function PortfolioPage() {
@@ -37,6 +39,14 @@ export default function PortfolioPage() {
             <div className="max-w-12xl mx-auto px-8 py-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
+                  <Link
+                    href="/"
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/30 rounded-lg transition-all duration-200"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Home
+                  </Link>
+                  <div className="w-px h-6 bg-zinc-700/50"></div>
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-blue-500 flex items-center justify-center shadow-lg">
                     <TrendingUp className="w-6 h-6 text-white" />
                   </div>

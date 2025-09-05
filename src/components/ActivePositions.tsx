@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PositionsOverview, Position } from "@/types/portfolio";
 import {
   Activity,
   TrendingUp,
@@ -13,10 +12,77 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
+// Extended interfaces to handle actual API response structure
+interface ApiPosition {
+  id: number;
+  portfolio_id: number;
+  exchange: string;
+  symbol: string;
+  side: "LONG" | "SHORT";
+  size: number;
+  entry_price: number;
+  mark_price: number;
+  pnl: {
+    unrealized_usd: number;
+    realized_usd: number;
+  };
+  margin_used_usd: number;
+  position_value_usd: number;
+  last_updated: string;
+}
+
+interface ApiPositionsResponse {
+  positions: ApiPosition[];
+  summary: {
+    total_positions: number;
+    long_positions: number;
+    short_positions: number;
+    total_unrealized_pnl_usd: number;
+    total_margin_used_usd: number;
+  };
+  filters_applied: {
+    symbol: string | null;
+    side: string | null;
+    min_value_usd: number | null;
+    include_closed: boolean;
+  };
+}
+
+// Normalized position interface for component use
+interface NormalizedPosition {
+  id: number;
+  portfolio_id: number;
+  symbol: string;
+  side: "LONG" | "SHORT";
+  size: number;
+  entry_price: number;
+  current_price: number;
+  unrealized_pnl_usd: number;
+  realized_pnl_usd: number;
+  value_usd: number;
+  margin_used_usd: number;
+  leverage: number;
+  is_closed: boolean;
+  opened_at: string;
+  closed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface NormalizedPositionsOverview {
+  total_positions: number;
+  total_value_usd: number;
+  total_unrealized_pnl_usd: number;
+  long_positions: number;
+  short_positions: number;
+  profitable_positions: number;
+  losing_positions: number;
+  positions: NormalizedPosition[];
+}
+
 export function ActivePositions() {
-  const [positionsData, setPositionsData] = useState<PositionsOverview | null>(
-    null
-  );
+  const [positionsData, setPositionsData] =
+    useState<NormalizedPositionsOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +95,77 @@ export function ActivePositions() {
   useEffect(() => {
     fetchPositions();
   }, [selectedSide, minValue, includeClosed]);
+
+  // Normalize API response to component format
+  const normalizePositionsData = (
+    apiData: ApiPositionsResponse
+  ): NormalizedPositionsOverview => {
+    const normalizedPositions: NormalizedPosition[] = apiData.positions.map(
+      (pos) => {
+        // Calculate current price from PnL if mark_price is 0
+        let currentPrice = pos.mark_price;
+        if (currentPrice === 0 && pos.entry_price > 0 && pos.size > 0) {
+          // Calculate current price from unrealized PnL: current_price = entry_price + (pnl / size)
+          const pnlPerUnit = pos.pnl.unrealized_usd / pos.size;
+          currentPrice =
+            pos.side === "LONG"
+              ? pos.entry_price + pnlPerUnit
+              : pos.entry_price - pnlPerUnit;
+        }
+        // If still 0, fallback to entry price
+        if (currentPrice === 0) {
+          currentPrice = pos.entry_price;
+        }
+
+        return {
+          id: pos.id,
+          portfolio_id: pos.portfolio_id,
+          symbol: pos.symbol,
+          side: pos.side,
+          size: pos.size,
+          entry_price: pos.entry_price,
+          current_price: currentPrice,
+          unrealized_pnl_usd: pos.pnl.unrealized_usd,
+          realized_pnl_usd: pos.pnl.realized_usd,
+          value_usd: pos.position_value_usd,
+          margin_used_usd: pos.margin_used_usd,
+          leverage:
+            pos.margin_used_usd > 0
+              ? Math.round(pos.position_value_usd / pos.margin_used_usd)
+              : 1,
+          is_closed: false, // API doesn't specify, assume open if returned
+          opened_at: pos.last_updated, // Use last_updated as proxy for opened_at
+          created_at: pos.last_updated,
+          updated_at: pos.last_updated,
+        };
+      }
+    );
+
+    // Calculate total position value
+    const totalValue = normalizedPositions.reduce(
+      (sum, pos) => sum + pos.value_usd,
+      0
+    );
+
+    // Count profitable and losing positions
+    const profitablePositions = normalizedPositions.filter(
+      (pos) => pos.unrealized_pnl_usd > 0
+    ).length;
+    const losingPositions = normalizedPositions.filter(
+      (pos) => pos.unrealized_pnl_usd < 0
+    ).length;
+
+    return {
+      total_positions: apiData.summary.total_positions,
+      total_value_usd: totalValue,
+      total_unrealized_pnl_usd: apiData.summary.total_unrealized_pnl_usd,
+      long_positions: apiData.summary.long_positions,
+      short_positions: apiData.summary.short_positions,
+      profitable_positions: profitablePositions,
+      losing_positions: losingPositions,
+      positions: normalizedPositions,
+    };
+  };
 
   const fetchPositions = async () => {
     try {
@@ -48,8 +185,13 @@ export function ActivePositions() {
         throw new Error("Failed to fetch positions");
       }
 
-      const data = await response.json();
-      setPositionsData(data);
+      const apiData: ApiPositionsResponse = await response.json();
+      console.log("Positions API Data:", apiData);
+
+      const normalizedData = normalizePositionsData(apiData);
+      console.log("Normalized Positions Data:", normalizedData);
+
+      setPositionsData(normalizedData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch positions"
@@ -72,7 +214,7 @@ export function ActivePositions() {
     return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
   };
 
-  const calculatePnLPercent = (position: Position) => {
+  const calculatePnLPercent = (position: NormalizedPosition) => {
     if (position.entry_price === 0) return 0;
     const pnlPercent =
       ((position.current_price - position.entry_price) / position.entry_price) *
@@ -80,8 +222,8 @@ export function ActivePositions() {
     return position.side === "SHORT" ? -pnlPercent : pnlPercent;
   };
 
-  const filteredPositions =
-    positionsData?.positions.filter((position) =>
+  const filteredPositions: NormalizedPosition[] =
+    positionsData?.positions.filter((position: NormalizedPosition) =>
       position.symbol.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
@@ -270,7 +412,7 @@ export function ActivePositions() {
 
         {filteredPositions.length > 0 ? (
           <div className="divide-y divide-zinc-800/40">
-            {filteredPositions.map((position) => {
+            {filteredPositions.map((position: NormalizedPosition) => {
               const pnlPercent = calculatePnLPercent(position);
               const isProfit = position.unrealized_pnl_usd >= 0;
 
@@ -403,7 +545,8 @@ export function ActivePositions() {
                 <span className="text-emerald-400 font-medium">
                   {
                     filteredPositions.filter(
-                      (p) => p.side === "LONG" && p.unrealized_pnl_usd > 0
+                      (p: NormalizedPosition) =>
+                        p.side === "LONG" && p.unrealized_pnl_usd > 0
                     ).length
                   }
                 </span>
@@ -430,7 +573,8 @@ export function ActivePositions() {
                 <span className="text-emerald-400 font-medium">
                   {
                     filteredPositions.filter(
-                      (p) => p.side === "SHORT" && p.unrealized_pnl_usd > 0
+                      (p: NormalizedPosition) =>
+                        p.side === "SHORT" && p.unrealized_pnl_usd > 0
                     ).length
                   }
                 </span>

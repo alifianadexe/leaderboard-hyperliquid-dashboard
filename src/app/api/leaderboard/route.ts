@@ -7,9 +7,21 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const sortBy = searchParams.get("sort_by") || "win_rate";
     const order = searchParams.get("order") || "desc";
+    const search = searchParams.get("search");
+
+    // Build the query parameters
+    const queryParams = new URLSearchParams({
+      sort_by: sortBy,
+      order: order,
+    });
+
+    // Add search parameter if provided
+    if (search) {
+      queryParams.append("search", search);
+    }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/leaderboard?sort_by=${sortBy}&order=${order}`,
+      `${API_BASE_URL}/api/v1/leaderboard?${queryParams.toString()}`,
       {
         method: "GET",
         headers: {

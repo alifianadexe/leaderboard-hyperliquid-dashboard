@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PortfolioSummary, Portfolio } from "@/types/portfolio";
+import { PortfolioSummary } from "@/types/portfolio";
 import {
   TrendingUp,
   TrendingDown,
@@ -14,9 +14,32 @@ import {
   XCircle,
 } from "lucide-react";
 
+// Extended portfolio interface to handle different API response structures
+interface ExtendedPortfolio {
+  id: number;
+  user_id?: string;
+  exchange_key_id?: number;
+  exchange_platform?: string;
+  exchange_info?: {
+    platform: string;
+    nickname: string;
+    exchange_key_id: number;
+  };
+  account_balance_usd: number;
+  total_pnl_usd: number;
+  unrealized_pnl_usd?: number;
+  realized_pnl_usd?: number;
+  margin_used_usd?: number;
+  margin_available_usd?: number;
+  active_positions_count: number;
+  last_sync_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export function PortfolioOverview() {
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
-  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [portfolios, setPortfolios] = useState<ExtendedPortfolio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [syncingPortfolios, setSyncingPortfolios] = useState<Set<number>>(
@@ -58,20 +81,55 @@ export function PortfolioOverview() {
 
       // Handle summary response
       if (summaryRes.ok) {
-        setSummary(summaryData);
+        setSummary(summaryData.summary || summaryData);
       } else {
         console.error("Summary API error:", summaryData);
       }
 
+      // Normalize portfolio data to handle different API response structures
+      const normalizePortfolio = (portfolio: any): ExtendedPortfolio => ({
+        id: portfolio.id,
+        user_id: portfolio.user_id,
+        exchange_key_id:
+          portfolio.exchange_info?.exchange_key_id || portfolio.exchange_key_id,
+        exchange_platform:
+          portfolio.exchange_info?.platform || portfolio.exchange_platform,
+        exchange_info: portfolio.exchange_info,
+        account_balance_usd:
+          portfolio.balance?.total_usd || portfolio.account_balance_usd || 0,
+        total_pnl_usd: portfolio.pnl?.total_usd || portfolio.total_pnl_usd || 0,
+        unrealized_pnl_usd:
+          portfolio.pnl?.unrealized_usd || portfolio.unrealized_pnl_usd || 0,
+        realized_pnl_usd:
+          portfolio.pnl?.realized_usd || portfolio.realized_pnl_usd || 0,
+        margin_used_usd:
+          portfolio.balance?.margin_used_usd || portfolio.margin_used_usd || 0,
+        margin_available_usd:
+          portfolio.balance?.available_usd ||
+          portfolio.margin_available_usd ||
+          0,
+        active_positions_count:
+          portfolio.positions_count || portfolio.active_positions_count || 0,
+        last_sync_at:
+          portfolio.last_updated ||
+          portfolio.last_sync_at ||
+          new Date().toISOString(),
+        created_at: portfolio.created_at || new Date().toISOString(),
+        updated_at:
+          portfolio.last_updated ||
+          portfolio.updated_at ||
+          new Date().toISOString(),
+      });
+
       // Handle portfolios response
       if (portfoliosRes.ok) {
         if (Array.isArray(portfoliosData)) {
-          setPortfolios(portfoliosData);
+          setPortfolios(portfoliosData.map(normalizePortfolio));
         } else if (
           portfoliosData.portfolios &&
           Array.isArray(portfoliosData.portfolios)
         ) {
-          setPortfolios(portfoliosData.portfolios);
+          setPortfolios(portfoliosData.portfolios.map(normalizePortfolio));
         } else if (portfoliosData.error) {
           throw new Error(portfoliosData.error);
         } else {
@@ -319,14 +377,21 @@ export function PortfolioOverview() {
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-lg flex items-center justify-center">
                         <span className="text-white font-bold text-sm">
-                          {portfolio.exchange_platform
+                          {(
+                            portfolio.exchange_info?.platform ||
+                            portfolio.exchange_platform ||
+                            "EX"
+                          )
                             .substring(0, 2)
                             .toUpperCase()}
                         </span>
                       </div>
                       <div>
                         <h3 className="text-white font-medium">
-                          {portfolio.exchange_platform} Portfolio
+                          {portfolio.exchange_info?.platform ||
+                            portfolio.exchange_platform ||
+                            "Exchange"}{" "}
+                          Portfolio
                         </h3>
                         <div className="flex items-center gap-4 text-sm text-zinc-400">
                           <span>ID: {portfolio.id}</span>

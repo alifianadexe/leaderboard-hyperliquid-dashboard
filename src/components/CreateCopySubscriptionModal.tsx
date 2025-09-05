@@ -52,9 +52,22 @@ export function CreateCopySubscriptionModal({
       const response = await fetch(`/api/leaderboard?search=${query || ""}`);
       if (!response.ok) throw new Error("Failed to fetch traders");
       const data = await response.json();
-      setTraders(data);
+
+      console.log("Leaderboard response:", data);
+
+      // Handle paginated response structure
+      if (data.data && Array.isArray(data.data)) {
+        setTraders(data.data);
+      } else if (Array.isArray(data)) {
+        // Fallback for direct array response
+        setTraders(data);
+      } else {
+        console.warn("Unexpected leaderboard response structure:", data);
+        setTraders([]);
+      }
     } catch (err) {
       console.error("Failed to fetch traders:", err);
+      setTraders([]);
     }
   };
 
@@ -219,44 +232,57 @@ export function CreateCopySubscriptionModal({
             </div>
 
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {traders.map((trader) => (
-                <button
-                  key={trader.trader_id}
-                  onClick={() => {
-                    setSelectedTraderState(trader);
-                    setStep("exchange");
-                  }}
-                  className="w-full p-4 bg-zinc-800/30 border border-zinc-700/50 rounded-xl hover:bg-zinc-800/40 transition-all duration-200 text-left"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-emerald-500 to-blue-500 flex items-center justify-center text-sm font-bold text-white">
-                      {trader.trader_address.slice(2, 4).toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-semibold text-white">
-                          {formatAddress(trader.trader_address)}
-                        </h4>
-                        <span className="text-xs text-zinc-500">
-                          ID: {trader.trader_id}
-                        </span>
+              {Array.isArray(traders) && traders.length > 0 ? (
+                traders.map((trader) => (
+                  <button
+                    key={trader.trader_id}
+                    onClick={() => {
+                      setSelectedTraderState(trader);
+                      setStep("exchange");
+                    }}
+                    className="w-full p-4 bg-zinc-800/30 border border-zinc-700/50 rounded-xl hover:bg-zinc-800/40 transition-all duration-200 text-left"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-emerald-500 to-blue-500 flex items-center justify-center text-sm font-bold text-white">
+                        {trader.trader_address.slice(2, 4).toUpperCase()}
                       </div>
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="text-emerald-400">
-                          Win Rate: {formatPercentage(trader.win_rate)}
-                        </span>
-                        <span className="text-zinc-400">
-                          Volume: {formatCurrency(trader.total_volume_usd)}
-                        </span>
-                        <span className="text-blue-400">
-                          Max Profit: {formatCurrency(trader.max_profit_usd)}
-                        </span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-semibold text-white">
+                            {formatAddress(trader.trader_address)}
+                          </h4>
+                          <span className="text-xs text-zinc-500">
+                            ID: {trader.trader_id}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="text-emerald-400">
+                            Win Rate: {formatPercentage(trader.win_rate)}
+                          </span>
+                          <span className="text-zinc-400">
+                            Volume: {formatCurrency(trader.total_volume_usd)}
+                          </span>
+                          <span className="text-blue-400">
+                            Max Profit: {formatCurrency(trader.max_profit_usd)}
+                          </span>
+                        </div>
                       </div>
+                      <TrendingUp className="w-5 h-5 text-emerald-400" />
                     </div>
-                    <TrendingUp className="w-5 h-5 text-emerald-400" />
+                  </button>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-zinc-400 mb-2">
+                    {traders.length === 0
+                      ? "No traders found"
+                      : "Loading traders..."}
                   </div>
-                </button>
-              ))}
+                  <p className="text-sm text-zinc-500">
+                    Try adjusting your search query
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

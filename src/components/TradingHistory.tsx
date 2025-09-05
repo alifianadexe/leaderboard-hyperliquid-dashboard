@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TradeHistoryResponse, Trade, Portfolio } from "@/types/portfolio";
 import {
   History,
   TrendingUp,
@@ -16,11 +15,108 @@ import {
   Copy,
 } from "lucide-react";
 
+// Extended interfaces to handle actual API response structure
+interface ApiTrade {
+  id: number;
+  exchange_trade_id: string;
+  exchange_order_id: string;
+  symbol: string;
+  side: "BUY" | "SELL";
+  trade_type: string;
+  size: number;
+  price: number;
+  fee_usd: number;
+  realized_pnl_usd: number;
+  is_closing_trade: boolean;
+  is_copy_trade: boolean;
+  copy_info?: {
+    copy_subscription_id: number;
+    master_trader_address: string;
+    copy_trade_execution_id: number;
+  } | null;
+  executed_at: string;
+  created_at: string;
+}
+
+interface ApiTradeHistoryResponse {
+  trades: ApiTrade[];
+  pagination: {
+    page: number;
+    limit: number;
+    total_count: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
+  summary: {
+    total_trades: number;
+    copy_trades: number;
+    manual_trades: number;
+  };
+  filters_applied: {
+    portfolio_id: number | null;
+    symbol: string | null;
+    copy_trades_only: boolean | null;
+    start_date: string | null;
+    end_date: string | null;
+  };
+}
+
+// Normalized trade interface for component use
+interface NormalizedTrade {
+  id: number;
+  portfolio_id?: number;
+  symbol: string;
+  side: "BUY" | "SELL";
+  size: number;
+  price: number;
+  value_usd: number;
+  fee_usd: number;
+  pnl_usd?: number;
+  is_copy_trade: boolean;
+  copy_subscription_id?: number;
+  master_trader_address?: string;
+  executed_at: string;
+  created_at: string;
+}
+
+interface NormalizedTradeHistoryResponse {
+  trades: NormalizedTrade[];
+  total_count: number;
+  page: number;
+  total_pages: number;
+  has_next: boolean;
+  has_prev: boolean;
+}
+
+// Extended portfolio interface to handle different API response structures
+interface ExtendedPortfolio {
+  id: number;
+  user_id?: string;
+  exchange_key_id?: number;
+  exchange_platform?: string;
+  exchange_info?: {
+    platform: string;
+    nickname: string;
+    exchange_key_id: number;
+  };
+  account_balance_usd: number;
+  total_pnl_usd: number;
+  unrealized_pnl_usd?: number;
+  realized_pnl_usd?: number;
+  margin_used_usd?: number;
+  margin_available_usd?: number;
+  active_positions_count: number;
+  last_sync_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export function TradingHistory() {
-  const [tradeHistory, setTradeHistory] = useState<TradeHistoryResponse | null>(
+  const [tradeHistory, setTradeHistory] = useState<NormalizedTradeHistoryResponse | null>(
     null
   );
-  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [portfolios, setPortfolios] = useState<ExtendedPortfolio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +145,53 @@ export function TradingHistory() {
     fetchTradeHistory();
   }, [currentPage, limit]);
 
+  // Normalize portfolio data similar to other components
+  const normalizePortfolio = (portfolio: any): ExtendedPortfolio => ({
+    id: portfolio.id,
+    user_id: portfolio.user_id,
+    exchange_key_id: portfolio.exchange_info?.exchange_key_id || portfolio.exchange_key_id,
+    exchange_platform: portfolio.exchange_info?.platform || portfolio.exchange_platform || "Exchange",
+    exchange_info: portfolio.exchange_info,
+    account_balance_usd: portfolio.balance?.total_usd || portfolio.account_balance_usd || 0,
+    total_pnl_usd: portfolio.pnl?.total_usd || portfolio.total_pnl_usd || 0,
+    unrealized_pnl_usd: portfolio.pnl?.unrealized_usd || portfolio.unrealized_pnl_usd || 0,
+    realized_pnl_usd: portfolio.pnl?.realized_usd || portfolio.realized_pnl_usd || 0,
+    margin_used_usd: portfolio.balance?.margin_used_usd || portfolio.margin_used_usd || 0,
+    margin_available_usd: portfolio.balance?.available_usd || portfolio.margin_available_usd || 0,
+    active_positions_count: portfolio.positions_count || portfolio.active_positions_count || 0,
+    last_sync_at: portfolio.last_updated || portfolio.last_sync_at || new Date().toISOString(),
+    created_at: portfolio.created_at || new Date().toISOString(),
+    updated_at: portfolio.last_updated || portfolio.updated_at || new Date().toISOString(),
+  });
+
+  // Normalize API response to component format
+  const normalizeTradeHistoryData = (apiData: ApiTradeHistoryResponse): NormalizedTradeHistoryResponse => {
+    const normalizedTrades: NormalizedTrade[] = apiData.trades.map((trade) => ({
+      id: trade.id,
+      symbol: trade.symbol,
+      side: trade.side,
+      size: trade.size,
+      price: trade.price,
+      value_usd: trade.size * trade.price, // Calculate value from size * price
+      fee_usd: trade.fee_usd,
+      pnl_usd: trade.realized_pnl_usd !== 0 ? trade.realized_pnl_usd : undefined,
+      is_copy_trade: trade.is_copy_trade,
+      copy_subscription_id: trade.copy_info?.copy_subscription_id,
+      master_trader_address: trade.copy_info?.master_trader_address,
+      executed_at: trade.executed_at,
+      created_at: trade.created_at,
+    }));
+
+    return {
+      trades: normalizedTrades,
+      total_count: apiData.pagination.total_count,
+      page: apiData.pagination.page,
+      total_pages: apiData.pagination.total_pages,
+      has_next: apiData.pagination.has_next,
+      has_prev: apiData.pagination.has_prev,
+    };
+  };
+
   const fetchPortfolios = async () => {
     try {
       const response = await fetch("/api/portfolio");
@@ -60,9 +203,9 @@ export function TradingHistory() {
 
       // Handle different response structures
       if (Array.isArray(data)) {
-        setPortfolios(data);
+        setPortfolios(data.map(normalizePortfolio));
       } else if (data.portfolios && Array.isArray(data.portfolios)) {
-        setPortfolios(data.portfolios);
+        setPortfolios(data.portfolios.map(normalizePortfolio));
       } else {
         setPortfolios([]);
         console.warn(
@@ -98,8 +241,13 @@ export function TradingHistory() {
         throw new Error("Failed to fetch trade history");
       }
 
-      const data = await response.json();
-      setTradeHistory(data);
+      const apiData: ApiTradeHistoryResponse = await response.json();
+      console.log("Trade History API Data:", apiData);
+      
+      const normalizedData = normalizeTradeHistoryData(apiData);
+      console.log("Normalized Trade History Data:", normalizedData);
+      
+      setTradeHistory(normalizedData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch trade history"
