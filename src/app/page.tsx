@@ -1,13 +1,7 @@
 import { Leaderboard } from "@/components/Leaderboard";
 import { ApiStatus } from "@/components/ApiStatus";
 import { UserDropdown } from "@/components/UserDropdown";
-import {
-  TrendingUp,
-  Zap,
-  Book,
-  Copy,
-  PieChart,
-} from "lucide-react";
+import { TrendingUp, Zap, Book, Copy, PieChart } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {

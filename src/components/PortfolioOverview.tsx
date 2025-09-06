@@ -84,34 +84,65 @@ export function PortfolioOverview() {
       }
 
       // Normalize portfolio data to handle different API response structures
-      const normalizePortfolio = (portfolio: Record<string, unknown>): ExtendedPortfolio => ({
+      const normalizePortfolio = (
+        portfolio: Record<string, unknown>
+      ): ExtendedPortfolio => ({
         id: (portfolio.id as number) || 0,
         user_id: (portfolio.user_id as string) || "",
         exchange_key_id:
-          ((portfolio.exchange_info as Record<string, unknown>)?.exchange_key_id as number) || (portfolio.exchange_key_id as number) || 0,
+          ((portfolio.exchange_info as Record<string, unknown>)
+            ?.exchange_key_id as number) ||
+          (portfolio.exchange_key_id as number) ||
+          0,
         exchange_platform:
-          ((portfolio.exchange_info as Record<string, unknown>)?.platform as string) || (portfolio.exchange_platform as string) || "Exchange",
-        exchange_info: portfolio.exchange_info as { platform: string; nickname: string; exchange_key_id: number; },
+          ((portfolio.exchange_info as Record<string, unknown>)
+            ?.platform as string) ||
+          (portfolio.exchange_platform as string) ||
+          "Exchange",
+        exchange_info: portfolio.exchange_info as {
+          platform: string;
+          nickname: string;
+          exchange_key_id: number;
+        },
         account_balance_usd:
-          ((portfolio.balance as Record<string, unknown>)?.total_usd as number) || (portfolio.account_balance_usd as number) || 0,
-        total_pnl_usd: ((portfolio.pnl as Record<string, unknown>)?.total_usd as number) || (portfolio.total_pnl_usd as number) || 0,
+          ((portfolio.balance as Record<string, unknown>)
+            ?.total_usd as number) ||
+          (portfolio.account_balance_usd as number) ||
+          0,
+        total_pnl_usd:
+          ((portfolio.pnl as Record<string, unknown>)?.total_usd as number) ||
+          (portfolio.total_pnl_usd as number) ||
+          0,
         unrealized_pnl_usd:
-          ((portfolio.pnl as Record<string, unknown>)?.unrealized_usd as number) || (portfolio.unrealized_pnl_usd as number) || 0,
+          ((portfolio.pnl as Record<string, unknown>)
+            ?.unrealized_usd as number) ||
+          (portfolio.unrealized_pnl_usd as number) ||
+          0,
         realized_pnl_usd:
-          ((portfolio.pnl as Record<string, unknown>)?.realized_usd as number) || (portfolio.realized_pnl_usd as number) || 0,
+          ((portfolio.pnl as Record<string, unknown>)
+            ?.realized_usd as number) ||
+          (portfolio.realized_pnl_usd as number) ||
+          0,
         margin_used_usd:
-          ((portfolio.balance as Record<string, unknown>)?.margin_used_usd as number) || (portfolio.margin_used_usd as number) || 0,
+          ((portfolio.balance as Record<string, unknown>)
+            ?.margin_used_usd as number) ||
+          (portfolio.margin_used_usd as number) ||
+          0,
         margin_available_usd:
-          ((portfolio.balance as Record<string, unknown>)?.available_usd as number) ||
+          ((portfolio.balance as Record<string, unknown>)
+            ?.available_usd as number) ||
           (portfolio.margin_available_usd as number) ||
           0,
         active_positions_count:
-          (portfolio.positions_count as number) || (portfolio.active_positions_count as number) || 0,
+          (portfolio.positions_count as number) ||
+          (portfolio.active_positions_count as number) ||
+          0,
         last_sync_at:
           (portfolio.last_updated as string) ||
           (portfolio.last_sync_at as string) ||
           new Date().toISOString(),
-        created_at: (portfolio.created_at as string) || new Date().toISOString(),
+        created_at:
+          (portfolio.created_at as string) || new Date().toISOString(),
         updated_at:
           (portfolio.last_updated as string) ||
           (portfolio.updated_at as string) ||

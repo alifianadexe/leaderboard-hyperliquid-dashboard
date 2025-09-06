@@ -86,7 +86,11 @@ export default function LoginPage() {
       router.push(redirectTo);
     } catch (err: unknown) {
       console.error("Wallet authentication error:", err);
-      setError(err instanceof Error ? err.message : "Failed to authenticate with wallet");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to authenticate with wallet"
+      );
     } finally {
       setIsLoading(false);
     }

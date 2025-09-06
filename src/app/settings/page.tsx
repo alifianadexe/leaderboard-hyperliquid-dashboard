@@ -206,7 +206,15 @@ export default function SettingsPage() {
                 ].map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
-                    onClick={() => setActiveTab(id as "general" | "notifications" | "security" | "privacy")}
+                    onClick={() =>
+                      setActiveTab(
+                        id as
+                          | "general"
+                          | "notifications"
+                          | "security"
+                          | "privacy"
+                      )
+                    }
                     className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
                       activeTab === id
                         ? "bg-blue-600 text-white shadow-lg"

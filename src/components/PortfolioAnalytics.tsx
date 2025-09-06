@@ -69,35 +69,60 @@ export function PortfolioAnalytics() {
       console.log("Is array:", Array.isArray(data));
 
       // Normalize portfolio data similar to PortfolioOverview
-      const normalizePortfolio = (portfolio: Record<string, unknown>): ExtendedPortfolio => ({
+      const normalizePortfolio = (
+        portfolio: Record<string, unknown>
+      ): ExtendedPortfolio => ({
         id: (portfolio.id as number) || 0,
         user_id: (portfolio.user_id as string) || "",
         exchange_key_id:
-          ((portfolio.exchange_info as Record<string, unknown>)?.exchange_key_id as number) || (portfolio.exchange_key_id as number) || 0,
+          ((portfolio.exchange_info as Record<string, unknown>)
+            ?.exchange_key_id as number) ||
+          (portfolio.exchange_key_id as number) ||
+          0,
         exchange_platform:
-          ((portfolio.exchange_info as Record<string, unknown>)?.platform as string) ||
+          ((portfolio.exchange_info as Record<string, unknown>)
+            ?.platform as string) ||
           (portfolio.exchange_platform as string) ||
           "Exchange",
         account_balance_usd:
-          ((portfolio.balance as Record<string, unknown>)?.total_usd as number) || (portfolio.account_balance_usd as number) || 0,
-        total_pnl_usd: ((portfolio.pnl as Record<string, unknown>)?.total_usd as number) || (portfolio.total_pnl_usd as number) || 0,
+          ((portfolio.balance as Record<string, unknown>)
+            ?.total_usd as number) ||
+          (portfolio.account_balance_usd as number) ||
+          0,
+        total_pnl_usd:
+          ((portfolio.pnl as Record<string, unknown>)?.total_usd as number) ||
+          (portfolio.total_pnl_usd as number) ||
+          0,
         unrealized_pnl_usd:
-          ((portfolio.pnl as Record<string, unknown>)?.unrealized_usd as number) || (portfolio.unrealized_pnl_usd as number) || 0,
+          ((portfolio.pnl as Record<string, unknown>)
+            ?.unrealized_usd as number) ||
+          (portfolio.unrealized_pnl_usd as number) ||
+          0,
         realized_pnl_usd:
-          ((portfolio.pnl as Record<string, unknown>)?.realized_usd as number) || (portfolio.realized_pnl_usd as number) || 0,
+          ((portfolio.pnl as Record<string, unknown>)
+            ?.realized_usd as number) ||
+          (portfolio.realized_pnl_usd as number) ||
+          0,
         margin_used_usd:
-          ((portfolio.balance as Record<string, unknown>)?.margin_used_usd as number) || (portfolio.margin_used_usd as number) || 0,
+          ((portfolio.balance as Record<string, unknown>)
+            ?.margin_used_usd as number) ||
+          (portfolio.margin_used_usd as number) ||
+          0,
         margin_available_usd:
-          ((portfolio.balance as Record<string, unknown>)?.available_usd as number) ||
+          ((portfolio.balance as Record<string, unknown>)
+            ?.available_usd as number) ||
           (portfolio.margin_available_usd as number) ||
           0,
         active_positions_count:
-          (portfolio.positions_count as number) || (portfolio.active_positions_count as number) || 0,
+          (portfolio.positions_count as number) ||
+          (portfolio.active_positions_count as number) ||
+          0,
         last_sync_at:
           (portfolio.last_updated as string) ||
           (portfolio.last_sync_at as string) ||
           new Date().toISOString(),
-        created_at: (portfolio.created_at as string) || new Date().toISOString(),
+        created_at:
+          (portfolio.created_at as string) || new Date().toISOString(),
         updated_at:
           (portfolio.last_updated as string) ||
           (portfolio.updated_at as string) ||
@@ -161,11 +186,13 @@ export function PortfolioAnalytics() {
         max_drawdown_usd: 0,
         max_drawdown_percent: 0,
         daily_pnl:
-          (pnlData.daily_breakdown as Array<Record<string, unknown>>)?.map((day: Record<string, unknown>) => ({
-            date: day.date as string,
-            pnl_usd: day.pnl_usd as number,
-            cumulative_pnl_usd: day.pnl_usd as number,
-          })) || [],
+          (pnlData.daily_breakdown as Array<Record<string, unknown>>)?.map(
+            (day: Record<string, unknown>) => ({
+              date: day.date as string,
+              pnl_usd: day.pnl_usd as number,
+              cumulative_pnl_usd: day.pnl_usd as number,
+            })
+          ) || [],
       };
 
       setPnLAnalysis(normalizedPnLAnalysis);
@@ -197,24 +224,31 @@ export function PortfolioAnalytics() {
           let totalCopyTrades = 0;
           let totalSuccessful = 0;
           let totalFailed = 0;
-          
+
           interface PerformanceData {
             subscription_id: number;
             master_trader_address: string;
             pnl_usd: number;
             win_rate: number;
           }
-          
+
           let bestPerformance: PerformanceData | null = null;
           let worstPerformance: PerformanceData | null = null;
 
           performances.forEach((perf: Record<string, unknown>) => {
             const performance = perf.performance as Record<string, unknown>;
             const trades = (performance?.total_copy_trades as number) || 0;
-            const successful = (performance?.successful_copy_trades as number) || 0;
+            const successful =
+              (performance?.successful_copy_trades as number) || 0;
             const failed = (performance?.failed_copy_trades as number) || 0;
-            const financialMetrics = performance?.financial_metrics as Record<string, unknown>;
-            const riskMetrics = performance?.risk_metrics as Record<string, unknown>;
+            const financialMetrics = performance?.financial_metrics as Record<
+              string,
+              unknown
+            >;
+            const riskMetrics = performance?.risk_metrics as Record<
+              string,
+              unknown
+            >;
             const pnl = (financialMetrics?.net_profit_usd as number) || 0;
             const winRate = (riskMetrics?.win_rate as number) || 0;
 
@@ -225,7 +259,8 @@ export function PortfolioAnalytics() {
             const subscription = perf.subscription as Record<string, unknown>;
             const perfData: PerformanceData = {
               subscription_id: (subscription?.id as number) || 0,
-              master_trader_address: (subscription?.master_trader_address as string) || "",
+              master_trader_address:
+                (subscription?.master_trader_address as string) || "",
               pnl_usd: pnl,
               win_rate: winRate,
             };
@@ -241,8 +276,10 @@ export function PortfolioAnalytics() {
           normalizedCopyTrading.total_copied_trades = totalCopyTrades;
           normalizedCopyTrading.successful_trades = totalSuccessful;
           normalizedCopyTrading.failed_trades = totalFailed;
-          normalizedCopyTrading.best_performing_subscription = bestPerformance || undefined;
-          normalizedCopyTrading.worst_performing_subscription = worstPerformance || undefined;
+          normalizedCopyTrading.best_performing_subscription =
+            bestPerformance || undefined;
+          normalizedCopyTrading.worst_performing_subscription =
+            worstPerformance || undefined;
         }
 
         setCopyTradingPerf(normalizedCopyTrading);
