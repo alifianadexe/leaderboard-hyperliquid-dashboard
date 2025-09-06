@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Book, FileText, ChevronRight, ArrowLeft } from "lucide-react";
 import { ApiStatus } from "@/components/ApiStatus";
+import { UserDropdown } from "@/components/UserDropdown";
 import { TrendingUp } from "lucide-react";
 import { marked } from "marked";
 import hljs from "highlight.js";
@@ -117,6 +118,7 @@ export default function DocsPage() {
                     Live
                   </span>
                 </div>
+                <UserDropdown />
               </div>
             </div>
           </div>
