@@ -5,7 +5,7 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const cookieStore = await cookies();
@@ -15,8 +15,11 @@ export async function POST(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    // Await the params promise
+    const resolvedParams = await params;
+
     const response = await fetch(
-      `${BACKEND_URL}/api/user/copy-subscriptions/${params.id}/pause`,
+      `${BACKEND_URL}/api/user/copy-subscriptions/${resolvedParams.id}/pause`,
       {
         method: "POST",
         headers: {

@@ -5,9 +5,10 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const cookieStore = await cookies();
     const authToken = cookieStore.get("auth_token");
 
@@ -16,7 +17,7 @@ export async function GET(
     }
 
     const response = await fetch(
-      `${BACKEND_URL}/api/user/copy-subscriptions/${params.id}`,
+      `${BACKEND_URL}/api/user/copy-subscriptions/${resolvedParams.id}`,
       {
         method: "GET",
         headers: {
@@ -44,9 +45,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const cookieStore = await cookies();
     const authToken = cookieStore.get("auth_token");
 
@@ -57,7 +59,7 @@ export async function PUT(
     const body = await request.json();
 
     const response = await fetch(
-      `${BACKEND_URL}/api/user/copy-subscriptions/${params.id}`,
+      `${BACKEND_URL}/api/user/copy-subscriptions/${resolvedParams.id}`,
       {
         method: "PUT",
         headers: {
@@ -86,9 +88,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const cookieStore = await cookies();
     const authToken = cookieStore.get("auth_token");
 
@@ -97,7 +100,7 @@ export async function DELETE(
     }
 
     const response = await fetch(
-      `${BACKEND_URL}/api/user/copy-subscriptions/${params.id}`,
+      `${BACKEND_URL}/api/user/copy-subscriptions/${resolvedParams.id}`,
       {
         method: "DELETE",
         headers: {

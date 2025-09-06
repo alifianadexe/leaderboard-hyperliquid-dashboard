@@ -5,9 +5,10 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const cookieStore = await cookies();
     const authToken = cookieStore.get("auth_token");
 
@@ -16,7 +17,7 @@ export async function GET(
     }
 
     const response = await fetch(
-      `${BACKEND_URL}/api/user/copy-subscriptions/${params.id}/pending-orders`,
+      `${BACKEND_URL}/api/user/copy-subscriptions/${resolvedParams.id}/pending-orders`,
       {
         method: "GET",
         headers: {
