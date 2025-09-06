@@ -5,7 +5,7 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const cookieStore = await cookies();
@@ -18,8 +18,11 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get("limit") || "50";
 
+    // Await the params promise
+    const resolvedParams = await params;
+
     const response = await fetch(
-      `${BACKEND_URL}/api/user/copy-subscriptions/${params.id}/execution-history?limit=${limit}`,
+      `${BACKEND_URL}/api/user/copy-subscriptions/${resolvedParams.id}/execution-history?limit=${limit}`,
       {
         method: "GET",
         headers: {
