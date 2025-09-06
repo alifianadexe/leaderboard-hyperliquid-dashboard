@@ -2,7 +2,11 @@ import { ethers } from "ethers";
 
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: {
+      request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+      on: (event: string, handler: (...args: unknown[]) => void) => void;
+      removeListener: (event: string, handler: (...args: unknown[]) => void) => void;
+    };
   }
 }
 
@@ -33,6 +37,10 @@ export class WalletService {
       throw new Error("MetaMask or compatible wallet not found");
     }
 
+    if (!window.ethereum) {
+      throw new Error("Ethereum provider not available");
+    }
+
     try {
       // Request account access
       await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -46,8 +54,9 @@ export class WalletService {
         provider: this.provider,
         signer: this.signer,
       };
-    } catch (error: any) {
-      throw new Error(`Failed to connect wallet: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Failed to connect wallet: ${message}`);
     }
   }
 
@@ -58,8 +67,9 @@ export class WalletService {
 
     try {
       return await this.signer.signMessage(message);
-    } catch (error: any) {
-      throw new Error(`Failed to sign message: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Failed to sign message: ${message}`);
     }
   }
 
@@ -68,14 +78,19 @@ export class WalletService {
       throw new Error("MetaMask not found");
     }
 
+    if (!window.ethereum) {
+      throw new Error("Ethereum provider not available");
+    }
+
     try {
       await window.ethereum.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: "0x1" }], // Ethereum Mainnet
       });
-    } catch (switchError: any) {
+    } catch (switchError: unknown) {
       // This error code indicates that the chain has not been added to MetaMask
-      if (switchError.code === 4902) {
+      const errorCode = (switchError as { code?: number })?.code;
+      if (errorCode === 4902) {
         try {
           await window.ethereum.request({
             method: "wallet_addEthereumChain",
@@ -93,7 +108,7 @@ export class WalletService {
               },
             ],
           });
-        } catch (addError) {
+        } catch {
           throw new Error("Failed to add Ethereum network");
         }
       } else {

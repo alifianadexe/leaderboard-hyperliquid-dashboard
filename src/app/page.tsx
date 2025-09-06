@@ -3,10 +3,7 @@ import { ApiStatus } from "@/components/ApiStatus";
 import { UserDropdown } from "@/components/UserDropdown";
 import {
   TrendingUp,
-  BarChart3,
-  Users,
   Zap,
-  Activity,
   Book,
   Copy,
   PieChart,

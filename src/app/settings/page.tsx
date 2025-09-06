@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -15,7 +15,6 @@ import {
   Globe,
   RefreshCw,
   Volume2,
-  VolumeX,
   Smartphone,
   Mail,
   Save,
@@ -103,7 +102,7 @@ export default function SettingsPage() {
   const updateSettings = <T extends keyof UserSettings>(
     section: T,
     key: keyof UserSettings[T],
-    value: any
+    value: UserSettings[T][keyof UserSettings[T]]
   ) => {
     setSettings((prev) => ({
       ...prev,
@@ -207,7 +206,7 @@ export default function SettingsPage() {
                 ].map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
-                    onClick={() => setActiveTab(id as any)}
+                    onClick={() => setActiveTab(id as "general" | "notifications" | "security" | "privacy")}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
                       activeTab === id
                         ? "bg-blue-600 text-white shadow-lg"

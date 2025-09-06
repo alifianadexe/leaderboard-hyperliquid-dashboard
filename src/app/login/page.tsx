@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -11,19 +11,15 @@ import {
   Loader2,
   Shield,
   TrendingUp,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { walletService } from "@/lib/wallet";
-import type { NonceResponse, AuthResponse } from "@/types/auth";
 
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<"wallet" | "google">("wallet");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [walletAddress, setWalletAddress] = useState<string>("");
-  const [showGoogleLogin, setShowGoogleLogin] = useState(false);
 
   const { login } = useAuth();
   const router = useRouter();
@@ -88,9 +84,9 @@ export default function LoginPage() {
 
       // Redirect to the intended page or home
       router.push(redirectTo);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Wallet authentication error:", err);
-      setError(err.message || "Failed to authenticate with wallet");
+      setError(err instanceof Error ? err.message : "Failed to authenticate with wallet");
     } finally {
       setIsLoading(false);
     }
@@ -282,7 +278,7 @@ export default function LoginPage() {
 
                 <div className="text-center">
                   <p className="text-xs text-zinc-500">
-                    We'll create an account if you don't have one
+                    We&apos;ll create an account if you don&apos;t have one
                   </p>
                 </div>
               </div>
@@ -292,7 +288,7 @@ export default function LoginPage() {
           {/* Footer */}
           <div className="text-center mt-6">
             <p className="text-zinc-500 text-sm">
-              Don't have MetaMask?{" "}
+              Don&apos;t have MetaMask?{" "}
               <a
                 href="https://metamask.io/"
                 target="_blank"

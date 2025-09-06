@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Activity,
   TrendingUp,
@@ -92,10 +92,6 @@ export function ActivePositions() {
   const [minValue, setMinValue] = useState<number | null>(null);
   const [includeClosed, setIncludeClosed] = useState(false);
 
-  useEffect(() => {
-    fetchPositions();
-  }, [selectedSide, minValue, includeClosed]);
-
   // Normalize API response to component format
   const normalizePositionsData = (
     apiData: ApiPositionsResponse
@@ -167,7 +163,7 @@ export function ActivePositions() {
     };
   };
 
-  const fetchPositions = async () => {
+  const fetchPositions = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -199,7 +195,12 @@ export function ActivePositions() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedSide, minValue, includeClosed]);
+
+  // Initial fetch on component mount
+  useEffect(() => {
+    fetchPositions();
+  }, [fetchPositions]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {

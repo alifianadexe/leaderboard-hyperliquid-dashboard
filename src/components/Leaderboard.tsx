@@ -16,7 +16,6 @@ import {
   Trophy,
   Users,
   DollarSign,
-  BarChart3,
   Clock,
   Activity,
   Copy,
@@ -37,19 +36,17 @@ export function Leaderboard({ className }: LeaderboardProps) {
   const [selectedTrader, setSelectedTrader] = useState<Trader | null>(null);
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage] = useState(1);
   const [limit] = useState(50);
 
-  // Filter state
-  const [filters, setFilters] = useState({
-    minWinRate: null as number | null,
-    minVolume: null as number | null,
-    minTrades: null as number | null,
-    onlyProfitable: false,
-    excludeNewTraders: false,
-  });
+  // Filter state - keeping for future use
+  // const [filters, setFilters] = useState({
+  //   minWinRate: null as number | null,
+  //   minVolume: null as number | null,
+  //   minTrades: null as number | null,
+  //   onlyProfitable: false,
+  //   excludeNewTraders: false,
+  // });
 
   const fetchLeaderboard = useCallback(async () => {
     try {
@@ -64,16 +61,16 @@ export function Leaderboard({ className }: LeaderboardProps) {
         limit: limit.toString(),
       });
 
-      // Add filters if they have values
-      if (filters.minWinRate !== null)
-        params.append("min_win_rate", filters.minWinRate.toString());
-      if (filters.minVolume !== null)
-        params.append("min_volume", filters.minVolume.toString());
-      if (filters.minTrades !== null)
-        params.append("min_trades", filters.minTrades.toString());
-      if (filters.onlyProfitable) params.append("only_profitable", "true");
-      if (filters.excludeNewTraders)
-        params.append("exclude_new_traders", "true");
+      // Add filters if they have values - commented out for now
+      // if (filters.minWinRate !== null)
+      //   params.append("min_win_rate", filters.minWinRate.toString());
+      // if (filters.minVolume !== null)
+      //   params.append("min_volume", filters.minVolume.toString());
+      // if (filters.minTrades !== null)
+      //   params.append("min_trades", filters.minTrades.toString());
+      // if (filters.onlyProfitable) params.append("only_profitable", "true");
+      // if (filters.excludeNewTraders)
+      //   params.append("exclude_new_traders", "true");
 
       const response = await fetch(`/api/leaderboard?${params}`, {
         method: "GET",
@@ -92,37 +89,37 @@ export function Leaderboard({ className }: LeaderboardProps) {
 
       // Handle the new paginated API response format
       let tradersArray = [];
-      let paginationData: any = {};
+      // let paginationData: Record<string, unknown> = {};
 
       if (Array.isArray(data)) {
         // Legacy format (direct array)
         tradersArray = data;
-        setTotalCount(data.length);
-        setTotalPages(1);
+        // setTotalCount(data.length);
+        // setTotalPages(1);
       } else if (data && Array.isArray(data.traders)) {
         // New paginated format with traders array
         tradersArray = data.traders;
-        paginationData = data;
+        // paginationData = data;
       } else if (data && Array.isArray(data.data)) {
         // Alternative paginated format with data array
         tradersArray = data.data;
-        paginationData = data;
+        // paginationData = data;
       } else if (data && Array.isArray(data.items)) {
         // Another possible paginated format
         tradersArray = data.items;
-        paginationData = data;
+        // paginationData = data;
       } else {
         console.warn("Unexpected API response format:", data);
         tradersArray = [];
       }
 
-      // Update pagination state if available
-      if (paginationData.total_count !== undefined)
-        setTotalCount(paginationData.total_count);
-      if (paginationData.total_pages !== undefined)
-        setTotalPages(paginationData.total_pages);
-      if (paginationData.page !== undefined)
-        setCurrentPage(paginationData.page);
+      // Update pagination state if available - keeping for future use
+      // if (paginationData.total_count !== undefined)
+      //   setTotalCount(paginationData.total_count as number);
+      // if (paginationData.total_pages !== undefined)
+      //   setTotalPages(paginationData.total_pages as number);
+      // if (paginationData.page !== undefined)
+      //   setCurrentPage(paginationData.page as number);
 
       setTraders(tradersArray);
     } catch (err) {
@@ -132,7 +129,7 @@ export function Leaderboard({ className }: LeaderboardProps) {
     } finally {
       setLoading(false);
     }
-  }, [sortBy, sortOrder, currentPage, limit, filters]);
+  }, [sortBy, sortOrder, currentPage, limit]);
 
   useEffect(() => {
     fetchLeaderboard();

@@ -7,7 +7,12 @@ export interface NonceResponse {
 export interface AuthResponse {
   access_token: string;
   token_type: string;
-  user: any;
+  user: {
+    id: string;
+    wallet_address: string;
+    created_at: string;
+    updated_at: string;
+  };
   is_new_user: boolean;
   expires_in: number;
 }

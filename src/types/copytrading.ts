@@ -35,7 +35,15 @@ export interface CopySubscriptionSummary {
   total_pnl_usd: number;
 }
 
-export interface CopySubscriptionResponse extends CopySubscription {}
+export interface CopySubscriptionResponse {
+  id: number;
+  master_trader_address: string;
+  is_active: boolean;
+  is_paused: boolean;
+  created_at: string;
+  updated_at: string;
+  risk_settings: RiskSettings;
+}
 
 export interface RiskSettings {
   copy_method: "AUTOMATIC" | "MANUAL";

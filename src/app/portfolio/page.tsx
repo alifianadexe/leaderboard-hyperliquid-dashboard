@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { PortfolioOverview } from "@/components/PortfolioOverview";
 import { PortfolioAnalytics } from "@/components/PortfolioAnalytics";
 import { TradingHistory } from "@/components/TradingHistory";
@@ -12,8 +12,6 @@ import {
   BarChart3,
   History,
   Activity,
-  RefreshCw,
-  Settings,
   ArrowLeft,
 } from "lucide-react";
 

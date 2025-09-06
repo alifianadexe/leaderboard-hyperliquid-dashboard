@@ -13,7 +13,6 @@ import {
   XCircle,
   AlertTriangle,
   Copy,
-  Globe,
   Activity,
   Shield,
   Clock,
@@ -335,7 +334,7 @@ export function ExchangeKeysManager({ className }: ExchangeKeysManagerProps) {
                   No API Keys
                 </h3>
                 <p className="text-zinc-500 mb-4">
-                  You haven't added any exchange API keys yet.
+                  You haven&apos;t added any exchange API keys yet.
                 </p>
                 <button
                   onClick={() => setActiveTab("create")}

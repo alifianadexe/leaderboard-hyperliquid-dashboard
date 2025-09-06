@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import {
   Copy,
   Plus,
-  Edit2,
   Trash2,
   Play,
   Pause,
@@ -14,19 +13,15 @@ import {
   TrendingDown,
   Clock,
   AlertTriangle,
-  CheckCircle,
   XCircle,
   BarChart3,
   Users,
   Settings,
-  Eye,
   RefreshCw,
 } from "lucide-react";
 import {
   CopySubscription,
   CopySubscriptionSummary,
-  CopySubscriptionCreate,
-  CopySubscriptionUpdate,
   RiskSettings,
 } from "@/types/copytrading";
 import {
@@ -141,33 +136,34 @@ export function CopySubscriptionsManager({
   };
 
   // Update subscription
-  const handleUpdate = async (
-    subscriptionId: number,
-    updates: CopySubscriptionUpdate
-  ) => {
-    try {
-      const response = await fetch(
-        `/api/user/copy-subscriptions/${subscriptionId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updates),
-        }
-      );
+  // Update subscription - keeping for future use
+  // const handleUpdate = async (
+  //   subscriptionId: number,
+  //   updates: CopySubscriptionUpdate
+  // ) => {
+  //   try {
+  //     const response = await fetch(
+  //       `/api/user/copy-subscriptions/${subscriptionId}`,
+  //       {
+  //         method: "PUT",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify(updates),
+  //       }
+  //     );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update subscription");
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.error || "Failed to update subscription");
+  //     }
 
-      await fetchSubscriptions();
-      setEditingSubscription(null);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to update subscription"
-      );
-    }
-  };
+  //     await fetchSubscriptions();
+  //     setEditingSubscription(null);
+  //   } catch (err) {
+  //     setError(
+  //       err instanceof Error ? err.message : "Failed to update subscription"
+  //     );
+  //   }
+  // };
 
   const getFilteredSubscriptions = () => {
     if (!summary) return [];
@@ -186,11 +182,12 @@ export function CopySubscriptionsManager({
     }
   };
 
-  const getStatusColor = (subscription: CopySubscription) => {
-    if (!subscription.is_active) return "text-gray-400";
-    if (subscription.is_paused) return "text-yellow-400";
-    return "text-green-400";
-  };
+  // Status color helper - keeping for future use
+  // const getStatusColor = (subscription: CopySubscription) => {
+  //   if (!subscription.is_active) return "text-gray-400";
+  //   if (subscription.is_paused) return "text-yellow-400";
+  //   return "text-green-400";
+  // };
 
   const getStatusText = (subscription: CopySubscription) => {
     if (!subscription.is_active) return "Inactive";
@@ -340,7 +337,7 @@ export function CopySubscriptionsManager({
           ].map(({ id, label, count }) => (
             <button
               key={id}
-              onClick={() => setActiveTab(id as any)}
+              onClick={() => setActiveTab(id as "active" | "paused" | "all")}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 activeTab === id
                   ? "bg-blue-600 text-white shadow-lg"
@@ -379,7 +376,7 @@ export function CopySubscriptionsManager({
                 No Copy Trading Subscriptions
               </h3>
               <p className="text-zinc-500 mb-4">
-                You haven't subscribed to any traders yet.
+                You haven&apos;t subscribed to any traders yet.
               </p>
               <button
                 onClick={() => setShowCreateModal(true)}

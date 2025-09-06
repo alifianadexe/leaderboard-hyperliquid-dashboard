@@ -14,7 +14,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+    // Send logout request to backend
+    await fetch(`${API_BASE_URL}/auth/logout`, {
       method: "POST",
       headers: {
         Authorization: authHeader,
